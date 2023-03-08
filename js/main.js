@@ -1,5 +1,6 @@
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const verovioscoreeditor_1 = require("verovioscoreeditor");
+const fieldNameStub = "field-name-";
 class Main {
     /**
      * Creates the main Class.
@@ -11,133 +12,47 @@ class Main {
      * @param {H5PEditor.SetParameters} setValue
      */
     constructor(parent, field, params, setValue) {
-        this.fullscreen = (function fullscreen(e) {
-            var _a, _b;
-            if (document.fullscreenElement) {
-                this.vse.getCore().getVerovioWrapper().getToolkit().setOptions({
-                    adjustPageWidth: 1,
-                });
-                document.exitFullscreen();
-            }
-            else {
-                this.vse.getCore().getVerovioWrapper().getToolkit().setOptions({
-                    adjustPageWidth: 0,
-                });
-                var userAgent = navigator.userAgent.toLowerCase();
-                if (userAgent.includes("apple") && !userAgent.includes("chrome")) {
-                    (_a = this.container) === null || _a === void 0 ? void 0 : _a.webkitRequestFullscreen();
-                }
-                else {
-                    (_b = this.container) === null || _b === void 0 ? void 0 : _b.requestFullscreen();
-                }
-            }
-        }).bind(this);
-        this.fullscreenElements = (function fullscreenElements() {
-            if (this.container.classList.contains("fullscreen")) {
-                this.container.classList.remove("fullscreen");
-                this.container.querySelector("#fullscreenWidget").classList.remove("transparent");
-            }
-            else {
-                this.container.classList.add("fullscreen");
-                this.container.querySelector("#fullscreenWidget").classList.add("transparent");
-            }
-        }).bind(this);
-        /**
-         * Function is Called in VerovioScoreEditor, when MEI has changed
-         */
-        this.setMei = (function setMei(mei) {
-            this.mei = mei;
-            this.setValue(this.field, this.mei);
-            // at this point we can be shure, that the core loaded 
-            this.vse.getCore().getVerovioWrapper().getToolkit().setOptions({
-                adjustPageWidth: 1,
-            });
-        }).bind(this);
         this.parent = parent;
         this.field = field;
-        this.mei = params;
+        this.viewMei = params;
         this.setValue = setValue;
-        //this.setDomAttachObserver()
         this.createContainer();
     }
     init() {
-        var _a;
-        if (this.mei != undefined) {
-            this.vse = new verovioscoreeditor_1.default(this.container.firstChild, { data: this.mei }, this.setMei);
+        this.setInteractiveNotationObserver();
+        // tree class is root object to all elements within the content creating dialog
+        this.tree = this.container.closest(".tree");
+        this.interactiveNotation = this.tree.querySelector("." + fieldNameStub + "interactiveNotation");
+        this.annotationFieldGroup = this.tree.querySelector("." + fieldNameStub + "annotationFieldGroup"); // this field will be used to save the annotationcanvas as string. will be parsed and replaced in task type
+        this.taskTypeGroup = this.tree.parentElement.querySelector("." + fieldNameStub + "selectTaskType");
+        if (this.taskTypeGroup !== null) {
+            this.taskTypeChange();
         }
-        else {
-            this.vse = new verovioscoreeditor_1.default(this.container.firstChild, null, this.setMei);
-        }
-        this.setScriptLoadObserver();
-        this.setCurrentTabObserver();
-        if (document.getElementById("verovioScript").getAttribute("loaded") === "true") {
-            this.container.querySelector("#clickInsert").dispatchEvent(new Event("click"));
-        }
-        this.fieldSet = this.container.closest("fieldset");
-        (_a = this.fieldSet.querySelector(".title[role=\"button\"]")) === null || _a === void 0 ? void 0 : _a.addEventListener("click", function (e) {
-            var t = e.target;
-            if (t.getAttribute("aria-expanded") === "true") {
-                t.closest("fieldset").style.height = "500px";
-            }
-            else {
-                t.closest("fieldset").style.height = "auto";
-            }
-        });
-    }
-    setScriptLoadObserver() {
-        var that = this;
-        var scriptLoadedObserver = new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                if (mutation.type === "attributes") {
-                    var t = mutation.target;
-                    if (mutation.attributeName === "loaded" && t.getAttribute(mutation.attributeName) === "true") {
-                        that.container.querySelector("#clickInsert").dispatchEvent(new Event("click")); //.click()
-                    }
-                }
-            });
-        });
-        scriptLoadedObserver.observe(document.getElementById("verovioScript"), {
-            attributes: true
-        });
     }
     /**
-     * Reload the mei when tab is clicked, so that the svg will be shown in proper size
+     * Attach listener to container of notationWidget, when container exists.
+     * Will listen for updates of the widget and update datastorage.
      */
-    setCurrentTabObserver() {
+    setInteractiveNotationObserver() {
         var that = this;
-        var currentTabObserver = new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                if (mutation.attributeName === "class") {
-                    var target = mutation.target;
-                    if (["h5p-current"].every(c => target.classList.contains(c))) {
-                        var vseContainer = target.querySelector(".vse-container");
-                        if (vseContainer.id !== that.vse.getCore().getContainer().id)
-                            return;
-                        var core = that.vse.getCore();
-                        core.loadData("", core.getCurrentMEI(false), false, "svg_output").then(() => {
-                            var overlay = that.container.querySelector("#interactionOverlay");
-                            Array.from(overlay.querySelectorAll(":scope > *")).forEach(anc => {
-                                anc.setAttribute("viewBox", overlay.getAttribute("viewBox"));
-                            });
-                        });
-                    }
-                }
-                if (mutation.target.constructor.name.toLowerCase().includes("element")) {
-                    var mt = mutation.target;
-                    if (mt.id === "interactionOverlay") {
-                        Array.from(mt.querySelectorAll(":scope > *")).forEach(anc => {
-                            anc.setAttribute("viewBox", mt.getAttribute("viewBox"));
-                        });
+        var firstRun = true;
+        var obs = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                var _a;
+                var t = mutation.target;
+                if (t.classList.contains("vse-container") && t.closest("." + fieldNameStub + "interactiveNotation") !== null) {
+                    if (firstRun) {
+                        (_a = t.closest(".h5p-notation-widget")) === null || _a === void 0 ? void 0 : _a.addEventListener("notationWidgetUpdate", that.setMeiListenerFunction.bind(that));
+                        document.addEventListener("annotationCanvasChanged", that.setMeiListenerFunction.bind(that), true);
+                        firstRun = false;
+                        obs.disconnect();
                     }
                 }
             });
         });
-        document.querySelectorAll(".h5p-vtab-form").forEach(q => {
-            currentTabObserver.observe(q, {
-                attributes: true,
-                childList: true,
-                subtree: true
-            });
+        obs.observe(document, {
+            childList: true,
+            subtree: true
         });
     }
     /**
@@ -148,22 +63,16 @@ class Main {
         this.container = document.createElement("div");
         this.container.classList.add("field");
         this.container.classList.add("text");
-        this.container.classList.add("h5p-notation-widget");
+        this.container.classList.add("h5p-as4l-controller");
         var subdiv = document.createElement("div");
         subdiv.classList.add("content");
-        subdiv.classList.add("notationWidgetContainer");
-        var idStump = "notationWidgetContainer";
+        subdiv.classList.add("as4lControllerContainer");
+        var idStump = "as4lControllerContainer";
         subdiv.id = idStump + "_" + this.generateUID();
         while (document.getElementById(subdiv.id) !== null) {
             subdiv.id = idStump + "_" + this.generateUID();
         }
         this.container.append(subdiv);
-        var button = document.createElement("button");
-        button.setAttribute("id", "fullscreenWidget");
-        button.textContent = "Fullscreen";
-        this.container.append(button);
-        button.addEventListener("click", this.fullscreen);
-        document.addEventListener("fullscreenchange", this.fullscreenElements);
         return this.container;
     }
     generateUID() {
@@ -182,6 +91,161 @@ class Main {
     remove() {
         var _a;
         (_a = this.vse) === null || _a === void 0 ? void 0 : _a.getCore().getWindowHandler().removeListeners(); // why ist this instance still active? deleting the instance does nothing
+    }
+    /**
+     * This function is Called in VerovioScoreEditor, when MEI has changed
+     */
+    /**
+     * Wrapper for setMei, if used for a listener
+     * @param e
+     */
+    setMeiListenerFunction(e) {
+        if (e.constructor.name === "CustomEvent") {
+            var event = e;
+            this.setMei(event.detail.mei);
+        }
+        else {
+            this.setMei();
+        }
+    }
+    /**
+     * Change mei of viewScore according to selected task type
+     * @param mei
+     */
+    setMei(mei = null) {
+        mei = mei === null ? this.viewMei : this.cleanMEI(mei);
+        this.viewMei = mei;
+        var dispatch = false;
+        this.viewScore = new DOMParser().parseFromString(mei, "text/xml");
+        var clear = false;
+        switch (this.taskType) { // TODO: Change mei according to tasktype. this will be copied to answerScore
+            case "noInteraction":
+                clear = true;
+                break;
+            case "harmLabels":
+                this.viewScore.querySelectorAll("harm").forEach(h => {
+                    while (h.firstChild) {
+                        h.firstChild.remove();
+                    }
+                    h.textContent = "?";
+                    h.classList.add("questionBox");
+                });
+                dispatch = true;
+                break;
+            case "chords":
+                this.viewScore.querySelectorAll("note, chord").forEach(n => {
+                    if (n.parentElement.tagName === "chord")
+                        return;
+                    var e = n;
+                    e.removeAttribute("oct");
+                    e.removeAttribute("pname");
+                    var rest = document.createElement("rest");
+                    for (var i = 0; i < e.attributes.length; i++) {
+                        rest.setAttribute(e.attributes.item(i).name, e.attributes.item(i).value);
+                    }
+                    n.replaceWith(rest);
+                });
+                dispatch = true;
+                break;
+            case "score":
+                break;
+            case "analysisText":
+                dispatch = true;
+                break;
+        }
+        if (dispatch) {
+            var ce = new CustomEvent("solutionMEIChanged", {
+                detail: {
+                    mei: this.restoreXmlIdTags(this.viewScore, false)
+                }
+            });
+            this.ttselect.dispatchEvent(ce);
+        }
+        if (clear) {
+            this.clearDataStorage();
+        }
+        else {
+            this.setDataStorage();
+        }
+    }
+    /**
+     * Clean mei for DOMParser
+     * @param mei
+     * @returns
+     */
+    cleanMEI(mei) {
+        mei = mei.replace(/\xml:id/gi, "id"); // xml:id attribute will cause parser error
+        mei = mei.replace(/\n/g, ""); // delete all unnecessary newline
+        mei = mei.replace(/\s{2,}/g, ""); // delete all unnecessary whitespaces
+        mei = mei.replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&quot;/g, "\"");
+        mei = mei.replace(/\xmlns=\"\"/g, "").replace(/\xmlns\s/g, "");
+        return mei;
+    }
+    /**
+     * Restore id to xml:id tags so that same ids will be used in verovio again
+     * @param xmlDoc
+     * @returns
+     */
+    restoreXmlIdTags(xmlDoc, parse = true) {
+        var mei = new XMLSerializer().serializeToString(xmlDoc).replace(/\ id/gi, " xml:id");
+        if (parse) {
+            return new DOMParser().parseFromString(mei, "text/xml");
+        }
+        return mei;
+    }
+    /**
+     * Write values in dataStorage Fields (see semantics.json for reference)
+     */
+    setDataStorage() {
+        if (this.viewScore != undefined) {
+            var viewScoreInput = document.querySelector("." + fieldNameStub + "viewScore input");
+            viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.setAttribute("value", new XMLSerializer().serializeToString(this.restoreXmlIdTags(this.viewScore)));
+            viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.dispatchEvent(new Event("change"));
+        }
+        var annotationCanvas = document.querySelector("." + fieldNameStub + "interactiveNotation #annotationCanvas");
+        if (annotationCanvas !== null) {
+            var annotaionFieldInput = document.querySelector("." + fieldNameStub + "annotationField input");
+            annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.setAttribute("value", new XMLSerializer().serializeToString(annotationCanvas));
+            annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.dispatchEvent(new Event("change"));
+        }
+        //     console.log("datastorage set")
+        //     console.log("viewScore", viewScoreInput?.getAttribute("value"))
+        //     console.log("annotationField", annotaionFieldInput?.getAttribute("value"))
+    }
+    /**
+     * Clear all inputs in dataStorage
+     */
+    clearDataStorage() {
+        var viewScoreInput = document.querySelector("." + fieldNameStub + "viewScore input");
+        viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.removeAttribute("value");
+        viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.dispatchEvent(new Event("change"));
+        var annotaionFieldInput = document.querySelector("." + fieldNameStub + "annotationField input");
+        annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.removeAttribute("value");
+        annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.dispatchEvent(new Event("change"));
+    }
+    /**
+     * Listens for changes in tasktypeselector, applies logic of copying mei depending on selected task
+     * @returns
+     */
+    taskTypeChange() {
+        var that = this;
+        this.ttselect = this.taskTypeGroup.querySelector("select");
+        this.taskType = this.ttselect.querySelectorAll("option")[this.ttselect.selectedIndex].getAttribute("value");
+        this.ttselect.addEventListener("change", function (e) {
+            var t = e.target;
+            that.taskType = t.querySelectorAll("option")[t.selectedIndex].getAttribute("value");
+            that.setMei();
+        });
+        this.ttselect.addEventListener("solutionMEIChanged", function (ce) {
+            var _a;
+            (_a = that.vse) === null || _a === void 0 ? void 0 : _a.getCore().loadData("", ce.detail.mei, false, "svg_output").then(() => {
+                if (that.taskType === "harmLabel") {
+                    that.container.querySelectorAll("#interactionOverlay .harm").forEach(h => {
+                        h.classList.add("questionBox");
+                    });
+                }
+            });
+        });
     }
     getContainer() {
         return this.container;

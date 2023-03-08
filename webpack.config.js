@@ -12,14 +12,14 @@ const config = {
   mode: nodeEnv,
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'h5p-notation-widget.css'
+      filename: 'h5p-as4l-controller.css'
     })
   ],
   entry: {
-    dist: './js/h5p-notation-widget.js',
+    dist: './js/h5p-as4l-controller.js',
   },
   output: {
-    filename: 'h5p-notation-widget.js',
+    filename: 'h5p-as4l-controller.js',
     path: path.resolve(__dirname, 'dist'),
   },
   module: {
@@ -52,16 +52,8 @@ const config = {
   ,
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'h5p-notation-widget.css'
+      filename: 'h5p-as4l-controller.css'
     }),
-    new WebpackBundleAnalyzer.BundleAnalyzerPlugin(),
-    //new CompressionPlugin()
-    // new BrotliPlugin({
-    //   asset: '[path].br[query]',
-    //   test: /\.(js|css|html|svg)$/,
-    //   threshold: 10240,
-    //   minRatio: 0.8
-    // })
     ]
 };
 

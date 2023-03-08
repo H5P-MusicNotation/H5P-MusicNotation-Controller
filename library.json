@@ -1,25 +1,25 @@
 {
-    "title": "H5PEditor.NotationWidget",
+    "title": "H5PEditor.As4lController",
     "description": "A musical notation widget for the h5p Editor",
     "majorVersion": 1,
-    "minorVersion": 1,
-    "patchVersion": 13,
+    "minorVersion": 0,
+    "patchVersion": 0,
     "runnable": 0,
     "author": "Matthias Nowakowski",
     "license": "MIT",
-    "machineName": "H5PEditor.NotationWidget",
+    "machineName": "H5PEditor.As4lController",
     "coreApi": {
       "majorVersion": 1,
       "minorVersion": 0
     },
     "preloadedJs": [
       {
-        "path": "./dist/h5p-notation-widget.js"
+        "path": "./dist/h5p-as4l-controller.js"
       }
     ],
     "preloadedCss": [
       {
-        "path": "./dist/h5p-notation-widget.css"
+        "path": "./dist/h5p-as4l-controller.css"
       }
     ]
   }

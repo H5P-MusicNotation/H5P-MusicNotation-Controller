@@ -1,7 +1,7 @@
 {
-    "title": "NotationWidget",
+    "title": "AnalysisScore4LMS Controller",
     "language": "en",
-    "mainLibrary": "H5PEditor.NotationWidget",
+    "mainLibrary": "H5PEditor.As4lController",
     "embedTypes": ["div"],
     "authors": [
       {
@@ -12,16 +12,16 @@
     "license": "MIT",
     "changes": [
       {
-        "date": "30.07.2021",
+        "date": "02.03.2023",
         "author": "mano",
         "log": "test version"
       }
     ],
     "preloadedDependencies": [
       {
-        "machineName": "H5PEditor.NotationWidget",
+        "machineName": "H5PEditor.As4lController",
         "majorVersion": 1,
-        "minorVersion": 1
+        "minorVersion": 0
       }
     ]
   }
