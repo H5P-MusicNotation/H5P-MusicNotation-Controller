@@ -6,7 +6,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer')
 
 const nodeEnv = process.env.NODE_ENV || 'development';
-const isDev = (nodeEnv !== 'production');
+const isDev = false //(nodeEnv !== 'production');
 
 const config = {
   mode: nodeEnv,
