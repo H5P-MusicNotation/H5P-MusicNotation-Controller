@@ -13,7 +13,9 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
     
 
     /**
-     * 
+     * This class has controller functions for the task creation view with the H5P Analysis Score 4 LMS package. 
+     * It yields storages for annotations and mei to use in task creation and task solving view.
+     * Also logic is handled depending on what kind of task type is selected within the task creation.
      *
      * @param {Object} parent
      * @param {Object} field

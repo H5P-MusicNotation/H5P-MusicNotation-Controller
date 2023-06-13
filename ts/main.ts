@@ -23,7 +23,7 @@ class Main {
 
     /**
      * Creates the main Class.
-     * I wrapped by h5p-notation-widget
+     * Contains main interaction logic.
      *
      * @param {Object} parent
      * @param {Object} field
