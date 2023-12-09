@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const fieldNameStub = "field-name-";
+const interactiveNotations = ["interactiveNotation_modelSolution", "interactiveNotation_studentView"];
 class Main {
     /**
      * Creates the main Class.
@@ -14,43 +15,81 @@ class Main {
     constructor(parent, field, params, setValue) {
         this.parent = parent;
         this.field = field;
-        this.viewMei = params;
+        this.studentMEIString = params;
         this.setValue = setValue;
         this.createContainer();
     }
     init() {
+        //document.querySelector("#field-extratitle--1").setAttribute("value", "Test")
+        this.update();
         this.setInteractiveNotationObserver();
-        // tree class is root object to all elements within the content creating dialog
-        this.tree = this.container.closest(".tree");
-        this.interactiveNotation = this.tree.querySelector("." + fieldNameStub + "interactiveNotation");
-        this.annotationFieldGroup = this.tree.querySelector("." + fieldNameStub + "annotationFieldGroup"); // this field will be used to save the annotationcanvas as string. will be parsed and replaced in task type
-        this.taskTypeGroup = this.tree.parentElement.querySelector("." + fieldNameStub + "selectTaskType");
-        if (this.taskTypeGroup !== null) {
-            this.taskTypeChange();
+        this.selectInteractiveGroup = this.rootContentContainer.querySelector(`.${fieldNameStub}selectInteractiveNotation select`); //this.rootContentContainer.parentElement.querySelector(`.${fieldNameStub}selectInteractiveNotation select`) as HTMLSelectElement
+        var that = this;
+        this.selectInteractiveGroup.addEventListener("change", function (e) {
+            that.interactiveNotationToggleListeners(e);
+        });
+        if (this.selectInteractiveGroup.querySelector("[selected]").getAttribute("value") === "interact") {
+            this.selectInteractiveGroup.dispatchEvent(new Event("change"));
         }
     }
     /**
-     * Attach listener to container of notationWidget, when container exists.
+     * Attach listeners and observers to container of notationWidget, when container exists.
      * Will listen for updates of the widget and update datastorage.
      */
     setInteractiveNotationObserver() {
         var that = this;
-        var firstRun = true;
+        var processedElements = new Array();
         var obs = new MutationObserver(mutations => {
             mutations.forEach(mutation => {
-                var _a;
                 var t = mutation.target;
-                if (t.classList.contains("vse-container") && t.closest("." + fieldNameStub + "interactiveNotation") !== null) {
-                    if (firstRun) {
-                        (_a = t.closest(".h5p-notation-widget")) === null || _a === void 0 ? void 0 : _a.addEventListener("notationWidgetUpdate", that.setMeiListenerFunction.bind(that));
-                        document.addEventListener("annotationCanvasChanged", that.setMeiListenerFunction.bind(that), true);
-                        firstRun = false;
+                var meiContainerQuery;
+                var svgContainerQuery;
+                if (t.classList.contains("vibe-container") && interactiveNotations.some(ia => {
+                    if (t.closest(`.${fieldNameStub}${ia}`) !== null && !processedElements.includes(ia)) {
+                        processedElements.push(ia);
+                        meiContainerQuery = ia.includes("modelSolution") ? `${fieldNameStub}solutionMEI input` : `${fieldNameStub}studentMEI input`;
+                        svgContainerQuery = ia.includes("modelSolution") ? `${fieldNameStub}solutionSVG input` : `${fieldNameStub}studentSVG input`;
+                        return true;
+                    }
+                })) {
+                    const widgetContainer = t.closest(".h5p-notation-widget");
+                    widgetContainer === null || widgetContainer === void 0 ? void 0 : widgetContainer.addEventListener("notationWidgetUpdate", that.setMeiListenerFunction.bind(that));
+                    const meiValue = this.rootContentContainer.querySelector(`.${meiContainerQuery}`).getAttribute("value");
+                    const svgValue = this.rootContentContainer.querySelector(`.${svgContainerQuery}`).getAttribute("value");
+                    if (meiValue && svgValue) {
+                        widgetContainer === null || widgetContainer === void 0 ? void 0 : widgetContainer.dispatchEvent(new CustomEvent("loadMei", {
+                            detail: {
+                                mei: meiValue,
+                                svg: svgValue,
+                                isFullContainer: true
+                            }
+                        }));
+                    }
+                    // observer should only process for each widgetcontaier once
+                    document.addEventListener("annotationCanvasChanged", that.setMeiListenerFunction.bind(that), true);
+                    if (processedElements === interactiveNotations) {
                         obs.disconnect();
+                    }
+                    //observer to change strings ob harmony labels based on selected taks configuration (check harm labels)
+                    var harmChangeObserver = new MutationObserver(function (mutations) {
+                        mutations.forEach(function (mutation) {
+                            var _a;
+                            var target = mutation.target;
+                            if (target.classList.contains("labelDiv") && ((_a = target.attributes.getNamedItem("contenteditable")) === null || _a === void 0 ? void 0 : _a.value) === "true" && that.checkHarmlabel) {
+                                if (target.textContent === "")
+                                    target.textContent = "?";
+                                console.log("harmChangeObserver", mutation.target);
+                            }
+                        });
+                    });
+                    var studentContainer = widgetContainer.closest(".field-name-interactiveNotation_studentView");
+                    if (studentContainer) {
+                        harmChangeObserver.observe(widgetContainer, { characterData: false, attributes: false, childList: true, subtree: true });
                     }
                 }
             });
         });
-        obs.observe(document, {
+        obs.observe(this.rootContentContainer, {
             childList: true,
             subtree: true
         });
@@ -63,11 +102,11 @@ class Main {
         this.container = document.createElement("div");
         this.container.classList.add("field");
         this.container.classList.add("text");
-        this.container.classList.add("h5p-as4l-controller");
+        this.container.classList.add("h5p-musicnotation-controller");
         var subdiv = document.createElement("div");
         subdiv.classList.add("content");
-        subdiv.classList.add("as4lControllerContainer");
-        var idStump = "as4lControllerContainer";
+        subdiv.classList.add("musicnotationControllerContainer");
+        var idStump = "musicnotationControllerContainer";
         subdiv.id = idStump + "_" + this.generateUID();
         while (document.getElementById(subdiv.id) !== null) {
             subdiv.id = idStump + "_" + this.generateUID();
@@ -83,6 +122,66 @@ class Main {
         return firstPart + secondPart;
     }
     /**
+     * Creates a button that copies the model solution to the student view.
+     */
+    createCopyButton() {
+        this.copyButton = document.createElement("div");
+        "h5peditor-button h5peditor-button-textual importance-high".split(" ").forEach(c => this.copyButton.classList.add(c));
+        this.copyButton.setAttribute("role", "button");
+        this.copyButton.textContent = "Copy Solution to Student View";
+        this.solutionContainer.parentElement.insertAdjacentElement("afterend", this.copyButton);
+        var that = this;
+        this.copyButton.addEventListener("click", function () {
+            that.studentMEIString = that.solutionMEIString;
+            that.studentMEIDoc = that.solutionMEIDoc;
+            that.studentSVG = that.solutionSVG;
+            that.studentContainer = that.solutionContainer;
+            that.setMei(that.studentMEIString, "student");
+            that.rootContentContainer.querySelector(`.${fieldNameStub}${interactiveNotations[1]} .h5p-notation-widget`).dispatchEvent(new CustomEvent("loadMei", {
+                detail: {
+                    mei: that.restoreXmlIdTags(that.studentMEIDoc),
+                    svg: that.rootContentContainer.querySelector(`.${fieldNameStub}studentSVG input`).getAttribute("value"),
+                    isFullContainer: true
+                }
+            }));
+        });
+    }
+    createAlignmentUploadButton() {
+        this.alignmentUploadButton = document.createElement("div");
+        "h5peditor-button h5peditor-button-textual importance-high".split(" ").forEach(c => this.alignmentUploadButton.classList.add(c));
+        this.alignmentUploadButton.setAttribute("role", "button");
+        this.alignmentUploadButton.textContent = "Import Alignment";
+        var alignemntInput = document.createElement("input");
+        alignemntInput.setAttribute("id", "alignmentInput");
+        alignemntInput.setAttribute("type", "file");
+        alignemntInput.style.display = "none";
+        alignemntInput.readOnly = false;
+        this.rootContentContainer.querySelector(`.${fieldNameStub}soundAlignmentJson`).parentElement.insertAdjacentElement("beforeend", this.alignmentUploadButton);
+        this.rootContentContainer.querySelector(`.${fieldNameStub}soundAlignmentJson`).parentElement.insertAdjacentElement("beforeend", alignemntInput);
+        var that = this;
+        this.alignmentUploadButton.addEventListener("click", function () {
+            alignemntInput.setAttribute("accept", [".json"].join(", "));
+            alignemntInput.click();
+            alignemntInput.addEventListener("input", function (e) {
+                var fr = new FileReader();
+                const fileName = this.files[0].name;
+                fr.onload = function () {
+                    that.alignMap = fr.result;
+                    const alignmentTextFieldInput = that.rootContentContainer.querySelector(`.${fieldNameStub}soundAlignmentJson input`);
+                    alignmentTextFieldInput.setAttribute("value", that.alignMap);
+                    alignmentTextFieldInput.dispatchEvent(new Event("change"));
+                    if (!alignmentTextFieldInput.parentElement.parentElement.querySelector("#fileNameDiv")) {
+                        const fileNameDiv = document.createElement("div");
+                        fileNameDiv.setAttribute("id", "fileNameDiv");
+                        alignmentTextFieldInput.parentElement.insertAdjacentElement("afterend", fileNameDiv);
+                    }
+                    alignmentTextFieldInput.parentElement.parentElement.querySelector("#fileNameDiv").textContent = fileName;
+                };
+                fr.readAsText(this.files[0]);
+            }, false);
+        });
+    }
+    /**
      * @returns
      */
     validate() {
@@ -90,76 +189,70 @@ class Main {
     }
     remove() {
         var _a;
-        (_a = this.vse) === null || _a === void 0 ? void 0 : _a.getCore().getWindowHandler().removeListeners(); // why ist this instance still active? deleting the instance does nothing
+        (_a = this.vibe) === null || _a === void 0 ? void 0 : _a.getCore().getWindowHandler().removeListeners(); // why ist this instance still active? deleting the instance does nothing
     }
     /**
      * This function is Called in VerovioScoreEditor, when MEI has changed
      */
     /**
-     * Wrapper for setMei, if used for a listener
+     * Wrapper for setMei, if used for a listener.
+     * Customevent will be called from notationWidget
      * @param e
      */
     setMeiListenerFunction(e) {
+        this.update();
         if (e.constructor.name === "CustomEvent") {
             var event = e;
-            this.setMei(event.detail.mei);
+            var fieldGroup = e.target.closest(".field.group");
+            if (fieldGroup.classList.contains(`${fieldNameStub}${interactiveNotations[0]}`)) {
+                this.setMei(event.detail.mei, "solution");
+            }
+            else if (fieldGroup.classList.contains(`${fieldNameStub}${interactiveNotations[1]}`)) {
+                this.setMei(event.detail.mei, "student");
+            }
         }
         else {
-            this.setMei();
+            this.setMei(this.solutionMEIString, "solution");
+            this.setMei(this.studentMEIString, "student");
         }
     }
     /**
-     * Change mei of viewScore according to selected task type
+     * Change mei of related scoreView
      * @param mei
+     * @param scoreView
      */
-    setMei(mei = null) {
-        mei = mei === null ? this.viewMei : this.cleanMEI(mei);
-        this.viewMei = mei;
-        var dispatch = false;
-        this.viewScore = new DOMParser().parseFromString(mei, "text/xml");
+    setMei(mei, scoreView) {
+        if (!mei)
+            return;
+        mei = this.cleanMEI(mei); //mei ? scoreMei : this.cleanMEI(mei)
+        var scoreMei = mei;
+        var scoreDoc = new DOMParser().parseFromString(mei, "text/xml");
         var clear = false;
-        switch (this.taskType) { // TODO: Change mei according to tasktype. this will be copied to answerScore
+        if (scoreView === "student") {
+            this.studentMEIString = scoreMei || this.studentMEIString;
+            this.studentMEIDoc = scoreDoc || this.studentMEIDoc;
+            this.studentSVG = this.studentContainer.querySelector(".vibe-container") || this.studentSVG;
+        }
+        if (scoreView === "solution") {
+            this.solutionMEIString = scoreMei || this.solutionMEIString;
+            this.solutionMEIDoc = scoreDoc || this.solutionMEIDoc;
+            this.solutionSVG = this.solutionContainer.querySelector(".vibe-container") || this.solutionSVG;
+        }
+        switch (this.interactionMode) {
             case "noInteraction":
                 clear = true;
                 break;
-            case "harmLabels":
-                this.viewScore.querySelectorAll("harm").forEach(h => {
-                    while (h.firstChild) {
-                        h.firstChild.remove();
-                    }
-                    h.textContent = "?";
-                    h.classList.add("questionBox");
-                });
-                dispatch = true;
+            case "interact":
+                // if (this.checkHarmlabel && scoreView === "student") {
+                //     this.studentMEIDoc.querySelectorAll("harm").forEach(h => {
+                //         while (h.firstChild) {
+                //             h.firstChild.remove()
+                //         }
+                //         h.textContent = "?"
+                //         h.classList.add("questionBox")
+                //     })
+                // }
                 break;
-            case "chords":
-                this.viewScore.querySelectorAll("note, chord").forEach(n => {
-                    if (n.parentElement.tagName === "chord")
-                        return;
-                    var e = n;
-                    e.removeAttribute("oct");
-                    e.removeAttribute("pname");
-                    var rest = document.createElement("rest");
-                    for (var i = 0; i < e.attributes.length; i++) {
-                        rest.setAttribute(e.attributes.item(i).name, e.attributes.item(i).value);
-                    }
-                    n.replaceWith(rest);
-                });
-                dispatch = true;
-                break;
-            case "score":
-                break;
-            case "analysisText":
-                dispatch = true;
-                break;
-        }
-        if (dispatch) {
-            var ce = new CustomEvent("solutionMEIChanged", {
-                detail: {
-                    mei: this.restoreXmlIdTags(this.viewScore, false)
-                }
-            });
-            this.ttselect.dispatchEvent(ce);
         }
         if (clear) {
             this.clearDataStorage();
@@ -197,58 +290,106 @@ class Main {
      * Write values in dataStorage Fields (see semantics.json for reference)
      */
     setDataStorage() {
-        if (this.viewScore != undefined) {
-            var viewScoreInput = document.querySelector("." + fieldNameStub + "viewScore input");
-            viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.setAttribute("value", new XMLSerializer().serializeToString(this.restoreXmlIdTags(this.viewScore)));
-            viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.dispatchEvent(new Event("change"));
+        // resources for solution
+        if (this.solutionMEIDoc) {
+            var solutionScoreInput = this.container.closest(".content").querySelector(`.${fieldNameStub}solutionMEI input`);
+            solutionScoreInput === null || solutionScoreInput === void 0 ? void 0 : solutionScoreInput.setAttribute("value", new XMLSerializer().serializeToString(this.restoreXmlIdTags(this.solutionMEIDoc)));
+            solutionScoreInput === null || solutionScoreInput === void 0 ? void 0 : solutionScoreInput.dispatchEvent(new Event("change"));
         }
-        var annotationCanvas = document.querySelector("." + fieldNameStub + "interactiveNotation #annotationCanvas");
-        if (annotationCanvas !== null) {
-            var annotaionFieldInput = document.querySelector("." + fieldNameStub + "annotationField input");
-            annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.setAttribute("value", new XMLSerializer().serializeToString(annotationCanvas));
-            annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.dispatchEvent(new Event("change"));
+        if (this.solutionSVG) {
+            var solutionSVGInput = this.container.closest(".content").querySelector(`.${fieldNameStub}solutionSVG input`);
+            solutionSVGInput === null || solutionSVGInput === void 0 ? void 0 : solutionSVGInput.setAttribute("value", new XMLSerializer().serializeToString(this.solutionSVG));
+            solutionSVGInput === null || solutionSVGInput === void 0 ? void 0 : solutionSVGInput.dispatchEvent(new Event("change"));
         }
-        //     console.log("datastorage set")
-        //     console.log("viewScore", viewScoreInput?.getAttribute("value"))
-        //     console.log("annotationField", annotaionFieldInput?.getAttribute("value"))
+        // resources for student view
+        if (this.studentMEIDoc) {
+            var studentScoreInput = this.container.closest(".content").querySelector(`.${fieldNameStub}studentMEI input`);
+            // the class "original" will be used in the following tasks to determine if the element (note, chord, harm, rest) was already present in the original to not award points for these.
+            this.studentMEIDoc.querySelectorAll("chord, note, rest, harm").forEach(el => {
+                el.className = "";
+                el.classList.add("original");
+            });
+            studentScoreInput === null || studentScoreInput === void 0 ? void 0 : studentScoreInput.setAttribute("value", new XMLSerializer().serializeToString(this.restoreXmlIdTags(this.studentMEIDoc)));
+            studentScoreInput === null || studentScoreInput === void 0 ? void 0 : studentScoreInput.dispatchEvent(new Event("change"));
+        }
+        if (this.studentSVG) {
+            var studentSVGInput = this.container.closest(".content").querySelector(`.${fieldNameStub}studentSVG input`);
+            studentSVGInput === null || studentSVGInput === void 0 ? void 0 : studentSVGInput.setAttribute("value", new XMLSerializer().serializeToString(this.studentSVG));
+            studentSVGInput === null || studentSVGInput === void 0 ? void 0 : studentSVGInput.dispatchEvent(new Event("change"));
+        }
+        // console.log("datastorage set")
+        // console.log("solutionScoreInput", solutionScoreInput?.getAttribute("value"))
+        // console.log("solutionSVGInput", solutionSVGInput?.getAttribute("value"))
+        // console.log("studentScoreInput", studentScoreInput?.getAttribute("value"))
+        // console.log("studentSVGInput", studentSVGInput?.getAttribute("value"))
     }
     /**
      * Clear all inputs in dataStorage
      */
     clearDataStorage() {
-        var viewScoreInput = document.querySelector("." + fieldNameStub + "viewScore input");
-        viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.removeAttribute("value");
-        viewScoreInput === null || viewScoreInput === void 0 ? void 0 : viewScoreInput.dispatchEvent(new Event("change"));
-        var annotaionFieldInput = document.querySelector("." + fieldNameStub + "annotationField input");
-        annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.removeAttribute("value");
-        annotaionFieldInput === null || annotaionFieldInput === void 0 ? void 0 : annotaionFieldInput.dispatchEvent(new Event("change"));
+        var solutionScoreInput = this.container.closest(".content").querySelector(`.${fieldNameStub}solutionMEI input`);
+        solutionScoreInput === null || solutionScoreInput === void 0 ? void 0 : solutionScoreInput.removeAttribute("value");
+        solutionScoreInput === null || solutionScoreInput === void 0 ? void 0 : solutionScoreInput.dispatchEvent(new Event("change"));
+        var solutionSVGInput = this.container.closest(".content").querySelector(`.${fieldNameStub}solutionSVG input`);
+        solutionSVGInput === null || solutionSVGInput === void 0 ? void 0 : solutionSVGInput.removeAttribute("value");
+        solutionSVGInput === null || solutionSVGInput === void 0 ? void 0 : solutionSVGInput.dispatchEvent(new Event("change"));
+        var studentScoreInput = this.container.closest(".content").querySelector(`.${fieldNameStub}studentMEI input`);
+        studentScoreInput === null || studentScoreInput === void 0 ? void 0 : studentScoreInput.removeAttribute("value");
+        studentScoreInput === null || studentScoreInput === void 0 ? void 0 : studentScoreInput.dispatchEvent(new Event("change"));
+        var studentSVGInput = this.container.closest(".content").querySelector(`.${fieldNameStub}studentSVG input`);
+        studentSVGInput === null || studentSVGInput === void 0 ? void 0 : studentSVGInput.removeAttribute("value");
+        studentSVGInput === null || studentSVGInput === void 0 ? void 0 : studentSVGInput.dispatchEvent(new Event("change"));
     }
     /**
      * Listens for changes in tasktypeselector, applies logic of copying mei depending on selected task
      * @returns
      */
-    taskTypeChange() {
+    interactiveNotationToggleListeners(e) {
         var that = this;
-        this.ttselect = this.taskTypeGroup.querySelector("select");
-        this.taskType = this.ttselect.querySelectorAll("option")[this.ttselect.selectedIndex].getAttribute("value");
-        this.ttselect.addEventListener("change", function (e) {
-            var t = e.target;
-            that.taskType = t.querySelectorAll("option")[t.selectedIndex].getAttribute("value");
-            that.setMei();
-        });
-        this.ttselect.addEventListener("solutionMEIChanged", function (ce) {
-            var _a;
-            (_a = that.vse) === null || _a === void 0 ? void 0 : _a.getCore().loadData("", ce.detail.mei, false, "svg_output").then(() => {
-                if (that.taskType === "harmLabel") {
-                    that.container.querySelectorAll("#interactionOverlay .harm").forEach(h => {
-                        h.classList.add("questionBox");
-                    });
-                }
+        var t = e.target;
+        that.interactionMode = t.querySelectorAll("option")[t.selectedIndex].getAttribute("value");
+        if (that.interactionMode === "interact" && !that.copyButton) {
+            that.createCopyButton();
+            that.createAlignmentUploadButton();
+            that.checkOctave = that.rootContentContainer.querySelector(`.${fieldNameStub}checkOctavePosition input`).hasAttribute("checked");
+            that.checkDuration = that.rootContentContainer.querySelector(`.${fieldNameStub}checkDuration input`).hasAttribute("checked");
+            that.checkHarmlabel = that.rootContentContainer.querySelector(`.${fieldNameStub}checkHarmLabels input`).hasAttribute("checked");
+            that.checkTextboxes = that.rootContentContainer.querySelector(`.${fieldNameStub}checkTextboxes input`).hasAttribute("checked");
+            //listen for any changes from the configuration checklist and change boolen status for given members
+            that.rootContentContainer.querySelectorAll(".boolean input").forEach(bi => {
+                bi.addEventListener("change", function (e) {
+                    var t = e.target;
+                    const fieldId = t.id.split("-")[1];
+                    switch (fieldId) {
+                        case "checkoctaveposition":
+                            that.checkOctave = t.checked;
+                            break;
+                        case "checkduration":
+                            that.checkDuration = t.checked;
+                            break;
+                        case "checkharmlabels":
+                            that.checkHarmlabel = t.checked;
+                            break;
+                        case "checktextboxes":
+                            that.checkTextboxes = t.checked;
+                            break;
+                    }
+                });
             });
-        });
+        }
+        else {
+            that.copyButton.remove();
+        }
+        that.setMei(that.solutionMEIString, "solution");
+        that.setMei(that.studentMEIString, "student");
     }
     getContainer() {
         return this.container;
+    }
+    update() {
+        this.rootContentContainer = this.container.closest(".h5p-vtab-form.content") || this.container.closest(".tree");
+        this.solutionContainer = this.rootContentContainer.querySelector(`.${fieldNameStub}${interactiveNotations[0]}`);
+        this.studentContainer = this.rootContentContainer.querySelector(`.${fieldNameStub}${interactiveNotations[1]}`);
     }
 }
 exports.default = Main;

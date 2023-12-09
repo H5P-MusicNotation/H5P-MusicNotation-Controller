@@ -1,0 +1,30 @@
+@import '~vibe-editor/src/styles/vibe.css';
+
+
+.field-name-musicnotationControllerGroup{
+    display: none;
+}
+
+.field.h5p-editor-widget-show-when .field.text input{
+    display: none;
+}
+
+.field-name-checkOctavePosition{
+    margin-left: 5%;
+}
+
+#alignmentInput, .field-name-soundAlignmentJson{
+    display: none;
+}
+
+.field-name-soundToAlign > .title {
+    text-indent: -9999px;
+    line-height: 0; /* Collapse the original line */
+  }
+  
+.field-name-soundToAlign > .title::after {
+content: "Sound Alignment";
+text-indent: 0;
+display: block;
+line-height: 2;
+}

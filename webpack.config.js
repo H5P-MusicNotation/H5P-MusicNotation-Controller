@@ -12,14 +12,14 @@ const config = {
   mode: nodeEnv,
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'h5p-as4l-controller.css'
+      filename: 'h5p-musicnotation-controller.css'
     })
   ],
   entry: {
-    dist: './js/h5p-as4l-controller.js',
+    dist: './js/h5p-musicnotation-controller.js',
   },
   output: {
-    filename: 'h5p-as4l-controller.js',
+    filename: 'h5p-musicnotation-controller.js',
     path: path.resolve(__dirname, 'dist'),
   },
   module: {
@@ -52,7 +52,7 @@ const config = {
   ,
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'h5p-as4l-controller.css'
+      filename: 'h5p-musicnotation-controller.css'
     }),
     ]
 };

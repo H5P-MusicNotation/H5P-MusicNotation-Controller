@@ -1,7 +1,7 @@
 {
-    "title": "AnalysisScore4LMS Controller",
+    "title": "MusicNotation Controller",
     "language": "en",
-    "mainLibrary": "H5PEditor.As4lController",
+    "mainLibrary": "H5PEditor.MusicnotationController",
     "embedTypes": ["div"],
     "authors": [
       {
@@ -19,7 +19,7 @@
     ],
     "preloadedDependencies": [
       {
-        "machineName": "H5PEditor.As4lController",
+        "machineName": "H5PEditor.MusicnotationController",
         "majorVersion": 1,
         "minorVersion": 0
       }

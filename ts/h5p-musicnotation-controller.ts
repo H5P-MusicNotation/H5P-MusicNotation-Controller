@@ -1,4 +1,4 @@
-import '../css/h5p-as4l-controller.css';
+import '../css/h5p-musicnotation-controller.css';
 import Main from "./main";
 
 /**
@@ -9,7 +9,7 @@ import Main from "./main";
 H5P = H5P || {}
 
 //@ts-ignore
-H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
+H5PEditor.widgets.musicnotationController = H5PEditor.MusicnotationController = (function ($) {
     
 
     /**
@@ -22,7 +22,7 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      * @param {string} params
      * @param {H5PEditor.SetParameters} setValue
      */
-    function As4lController(parent, field, params, setValue) {
+    function musicnotationController(parent, field, params, setValue) {
       var self = this
       this.mainInstance = new Main(parent, field, params, setValue)
     }
@@ -33,7 +33,7 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      *
      * @param {H5P.jQuery} $wrapper
      */
-    As4lController.prototype.appendTo = function ($wrapper) {
+    musicnotationController.prototype.appendTo = function ($wrapper) {
       var self = this
       self.$container = this.mainInstance.getContainer()
       $wrapper.append(self.$container)
@@ -72,17 +72,17 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      *
      * @returns {boolean}
      */
-    As4lController.prototype.validate = function () {
+    musicnotationController.prototype.validate = function () {
       this.mainInstance.validate()
     };
    
     /**
      * Remove the current field
      */
-    As4lController.prototype.remove = function () {
+    musicnotationController.prototype.remove = function () {
       this.mainInstance.remove()
     };
    
-    return As4lController;
+    return musicnotationController;
     //@ts-ignore
   })(H5P.jQuery);

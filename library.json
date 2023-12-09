@@ -1,25 +1,25 @@
 {
-    "title": "H5PEditor.As4lController",
-    "description": "A musical notation widget for the h5p Editor",
+    "title": "H5PEditor.MusicnotationController",
+    "description": "A set of controlling functions for exchanging data beteween task and task editting for the Music Notatin module.",
     "majorVersion": 1,
     "minorVersion": 0,
-    "patchVersion": 2,
+    "patchVersion": 1,
     "runnable": 0,
     "author": "Matthias Nowakowski",
     "license": "MIT",
-    "machineName": "H5PEditor.As4lController",
+    "machineName": "H5PEditor.MusicnotationController",
     "coreApi": {
       "majorVersion": 1,
       "minorVersion": 0
     },
     "preloadedJs": [
       {
-        "path": "./dist/h5p-as4l-controller.js"
+        "path": "./dist/h5p-musicnotation-controller.js"
       }
     ],
     "preloadedCss": [
       {
-        "path": "./dist/h5p-as4l-controller.css"
+        "path": "./dist/h5p-musicnotation-controller.css"
       }
     ]
   }

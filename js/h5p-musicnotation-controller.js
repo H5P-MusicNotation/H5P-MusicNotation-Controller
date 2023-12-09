@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("../css/h5p-as4l-controller.css");
+require("../css/h5p-musicnotation-controller.css");
 const main_1 = require("./main");
 /**
  * This is a H5P conform wrapper for a similar typescript class.
@@ -8,7 +8,7 @@ const main_1 = require("./main");
 //@ts-ignore
 H5P = H5P || {};
 //@ts-ignore
-H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
+H5PEditor.widgets.musicnotationController = H5PEditor.MusicnotationController = (function ($) {
     /**
      * This class has controller functions for the task creation view with the H5P Analysis Score 4 LMS package.
      * It yields storages for annotations and mei to use in task creation and task solving view.
@@ -19,7 +19,7 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      * @param {string} params
      * @param {H5PEditor.SetParameters} setValue
      */
-    function As4lController(parent, field, params, setValue) {
+    function musicnotationController(parent, field, params, setValue) {
         var self = this;
         this.mainInstance = new main_1.default(parent, field, params, setValue);
     }
@@ -29,7 +29,7 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      *
      * @param {H5P.jQuery} $wrapper
      */
-    As4lController.prototype.appendTo = function ($wrapper) {
+    musicnotationController.prototype.appendTo = function ($wrapper) {
         var self = this;
         self.$container = this.mainInstance.getContainer();
         $wrapper.append(self.$container);
@@ -65,15 +65,15 @@ H5PEditor.widgets.as4lController = H5PEditor.As4lController = (function ($) {
      *
      * @returns {boolean}
      */
-    As4lController.prototype.validate = function () {
+    musicnotationController.prototype.validate = function () {
         this.mainInstance.validate();
     };
     /**
      * Remove the current field
      */
-    As4lController.prototype.remove = function () {
+    musicnotationController.prototype.remove = function () {
         this.mainInstance.remove();
     };
-    return As4lController;
+    return musicnotationController;
     //@ts-ignore
 })(H5P.jQuery);
