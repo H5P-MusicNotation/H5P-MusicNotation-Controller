@@ -1,5 +1,4 @@
 # Music Notation Controller
-=======
 
 This H5P Editor module helps organize and save SVG and MEI files for use in the H5P Music Notation Module.
 **This module is necessary for H5P Music Notation to work! Click on the module name for the documentation of [Music Notation](https://github.com/H5P-MusicNotation/H5P-MusicNotation).**
@@ -7,7 +6,7 @@ This H5P Editor module helps organize and save SVG and MEI files for use in the 
 In the task creation form, the file contents are stored as text in hidden text boxes and can then be used as parameters during actual task handling. 
 The DOM for this code is created in the Music Notation module based on the following entry in the semantics.json:
 
-`
+```json
 {
     "name": "musicnotationControllerGroup",
     "type": "group",
@@ -49,4 +48,4 @@ The DOM for this code is created in the Music Notation module based on the follo
         }
     ]
 }
-`
+```
