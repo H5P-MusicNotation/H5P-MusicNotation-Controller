@@ -49,3 +49,6 @@ The DOM for this code is created in the Music Notation module based on the follo
     ]
 }
 ```
+
+## Resources 
+Get all working modules and dependencies at [SourceForge](https://sourceforge.net/projects/h5p-music-notation/)
