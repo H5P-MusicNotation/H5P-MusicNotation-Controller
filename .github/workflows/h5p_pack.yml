@@ -1,0 +1,30 @@
+name: Pack H5P Widget MusicNotation Controller
+
+on: 
+  push:
+    branches: [main]
+
+jobs:
+  pack:
+    name: Pack with MusicNotation Controller Widget
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install npm 
+        run: npm install
+      - name: Make dir for h5p package if not existent
+        run: mkdir -p h5p-package
+      - name: run h5p pack
+        run: |
+          npm install -g h5p
+          cd ..
+          h5p pack H5P-MusicNotation-Controller H5P-MusicNotation-Controller/h5p-package/h5p-musicnotation-controller.h5p
+      - name: Save changes to repo
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit-message: update h5p package by workflow
+          branch: main
+          file_patters: h5p-package/*.h5p
+      
+        
