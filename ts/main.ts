@@ -1,5 +1,3 @@
-import VIBE from "vibe-editor";
-
 const fieldNameStub = "field-name-"
 const interactiveNotations = ["interactiveNotation_modelSolution", "interactiveNotation_studentView"]
 
@@ -9,7 +7,6 @@ class Main {
     private field;
     private params;
     private setValue
-    private vibe: VIBE
     private container: HTMLElement
     private rootContentContainer: HTMLElement
     private selectInteractiveGroup: HTMLElement
@@ -237,7 +234,7 @@ class Main {
     }
 
     remove() {
-        this.vibe?.getCore().getWindowHandler().removeListeners() // why ist this instance still active? deleting the instance does nothing
+       
     }
 
     /**

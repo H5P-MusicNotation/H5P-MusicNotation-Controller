@@ -188,8 +188,6 @@ class Main {
         return true;
     }
     remove() {
-        var _a;
-        (_a = this.vibe) === null || _a === void 0 ? void 0 : _a.getCore().getWindowHandler().removeListeners(); // why ist this instance still active? deleting the instance does nothing
     }
     /**
      * This function is Called in VerovioScoreEditor, when MEI has changed

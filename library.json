@@ -3,7 +3,7 @@
     "description": "A set of controlling functions for exchanging data beteween task and task editting for the Music Notatin module.",
     "majorVersion": 1,
     "minorVersion": 0,
-    "patchVersion": 2,
+    "patchVersion": 3,
     "runnable": 0,
     "author": "Matthias Nowakowski",
     "license": "MIT",

@@ -1,6 +1,6 @@
 {
     "name": "h5p-musicnotation-controller",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "description": "A widget controlling logic for h5p-notation-widget in MusicNotation package",
     "scripts": {
         "build": "./node_modules/.bin/webpack --mode=production",
@@ -30,8 +30,7 @@
         "style-loader": "^3.3.1",
         "update": "^0.7.4",
         "webpack": "^5.70.0",
-        "webpack-cli": "^4.9.2",
-        "vibe-editor":"0.0.4"
+        "webpack-cli": "^4.9.2"
     },
     "devDependencies": {
         "webpack-bundle-analyzer": "^4.5.0"
